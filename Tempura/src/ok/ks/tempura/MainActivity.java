@@ -407,23 +407,22 @@ public class MainActivity extends Activity
 
         try {
             float temp_C = 0.0f;
-//            float temp_F = 0.0f;
             float humidity = 0.0f;
             
             JSONObject jsons = new JSONObject(json);
-//            JSONObject jsonsData = jsons.getJSONObject("list");
             JSONArray jsonArray = jsons.getJSONArray("list");
-//            String tempStatus = "";
             for (int i = 0; i < jsonArray.length(); i++) {
 
                 JSONObject jsonObj = jsonArray.getJSONObject(i);
+                JSONObject mainObj = jsonObj.getJSONObject("main");
                 try
                 {
-//                  tempStatus = jsonObj.getString("weatherCode");
-                    JSONObject jo = jsonObj.getJSONObject("temp");
-                    temp_C = (float) jo.getDouble("day");
-//                    temp_F = (float) jsonObj.getDouble("temp_F");
-                    humidity = (float) jsonObj.getDouble("humidity");
+                    temp_C = ((float) mainObj.getDouble("temp"));
+                    humidity = 0.0f;
+                    if (mainObj.has("humidity"))
+                    {
+                        humidity = (float) mainObj.getInt("humidity");
+                    }
                 } catch (JSONException e) {
                 }
             }

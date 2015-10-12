@@ -29,12 +29,14 @@ public class MyWeatherAPI {
      */
     //http://api.worldweatheronline.com/free/v1/weather.ashx?q=26.256406%2C+127.718339&format=json&num_of_days=1&key=6n7mpc5q82g8v3kda23jx5j7
     //private static final String BASE_URL = "http://api.worldweatheronline.com/free/v1/weather.ashx";
-    private static final String BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily";//?lat=26.256439&lon=127.718357&cnt=1&mode=json";
+//    private static final String BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily";//?lat=26.256439&lon=127.718357&cnt=1&mode=json";
+    private static final String BASE_URL = "http://api.openweathermap.org/data/2.5/find";//?lat=26.256439&lon=127.718357&cnt=1&mode=json";
 
     /**
      * API Key
      */
-    public static final String API_KEY = "6n7mpc5q82g8v3kda23jx5j7";
+//    public static final String API_KEY = "6n7mpc5q82g8v3kda23jx5j7";
+    public static final String API_KEY = "cfde2f4fad6177d0f92818edc5670c76";
     
     /**
      * Action ID of Upload
@@ -64,8 +66,10 @@ public class MyWeatherAPI {
         {
             final String latitude = "" + loc.getLatitude();
             final String longitude = "" + loc.getLongitude();
-            final String key[] = { "lat", "lon", "cnt", "mode" };
-            final String value[] = { latitude, longitude, "1", "json" };
+            final String key[] = { "APPID",
+            							"lat", "lon", "cnt", "mode" };
+            final String value[] = { API_KEY,
+            							latitude, longitude, "1", "json" };
             this.sendData(key, value);
         }
         catch (Exception ex)
