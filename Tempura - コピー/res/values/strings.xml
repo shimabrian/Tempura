@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Tempura</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="temperature">気温</string>
+    <string name="humidity">湿度</string>
+    <string name="time">時間</string>
+    <string name="temp_0_to_24">気持ちいい</string>
+    <string name="temp_25_to_27">少し暑いかな</string>
+    <string name="temp_28_to_30">暑い</string>
+    <string name="temp_31_to_40">でーじ暑い</string>
+    <string name="Adlantis_Publisher_ID">Mjg2NTY%3D%0A</string>
+    <string name="max_temperature">123.4</string>
+    <string name="max_humidity">123.4</string>
+    <string name="caption_temperature">Temperature</string>
+    <string name="caption_humidity">Humidity</string>
+    <string name="AdMob_Publisher_ID">ca-app-pub-8412619092609315/8069054198</string>
+    	
+</resources>

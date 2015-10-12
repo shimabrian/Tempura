@@ -1,0 +1,173 @@
+package ok.ks.tempura;
+
+import android.content.Context;
+import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.util.Log;
+import android.widget.Toast;
+
+public class MyLocationManager implements LocationListener {
+
+    private final static String TAG = ".::MyLocationManager::.";
+    private Context _Context;
+    private LocationManager _LocationManager;
+    private Location _Location = new Location("");
+    private MyLocationManagerListener _MyLocationManagerListener;
+
+    /**
+     * コンストラクタ
+     * @param context
+     */
+    public MyLocationManager(Context context) {
+        if (MyData.DEBUG) Log.i(TAG, "start to get LocationManager");
+        _Context = context;
+        try
+        {
+            _LocationManager = (LocationManager) _Context.getSystemService(Context.LOCATION_SERVICE);
+            final boolean gpsEnabled = _LocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            if (!gpsEnabled)
+            {
+                // トースト表示
+                Toast.makeText(_Context, "Temperature sensor is not equipped. Set <<GPS>> to be available.", Toast.LENGTH_LONG).show();
+                // GPS設定画面へ
+                enableLocationSettings();
+                // アプリは終了
+                ((MainActivity)_Context).finish();
+                return;
+            }
+
+            if (MyData.DEBUG) Log.i(TAG, "_LocationManager success");
+        }
+        catch (Exception ex)
+        {
+            Log.e("MyLocationManager", ex.getMessage());
+        }
+    }
+
+    /**
+     * Eventリスナーを設定
+     * 
+     * @param listener
+     */
+    public void setEventListener(MyLocationManagerListener listener) {
+        this._MyLocationManagerListener = listener;
+    }
+    
+    /**
+     * Eventリスナーを削除
+     * 
+     * @param listener
+     */
+    public void removeEventListener() {
+        this._MyLocationManagerListener = null;
+    }
+
+    /**
+     * GPS設定画面へ遷移させる。
+     */
+    private void enableLocationSettings() {
+        Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        _Context.startActivity(settingsIntent);
+    }
+    
+    /**
+     * アクティビティのスタートイベントで呼ぶ
+     */
+    public void onStart()
+    {
+        if (MyData.DEBUG) Log.i(TAG, "onStart");
+        try
+        {
+            if (_LocationManager != null)
+            {
+                // 通知間隔を設定
+                _LocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.e(TAG, ex.getMessage());
+        }
+    }
+
+    /**
+     * アクティビティのレジュームイベントで呼ぶ
+     */
+    public void onResume()
+    {
+        if (MyData.DEBUG) Log.i(TAG, "onResume");
+        try
+        {
+            if (_LocationManager != null)
+            {
+                // 最新の位置情報を取得
+                _Location = _LocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                _MyLocationManagerListener.UpdatedLocation(_Location);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.e(TAG, ex.getMessage());
+        }
+    }
+
+    /**
+     * アクティビティのポーズイベントで呼ぶ
+     */
+    public void onPause()
+    {
+        // 重要：requestLocationUpdatesしたままアプリを終了すると挙動がおかしくなる。
+        _LocationManager.removeUpdates(this);
+    }
+    
+    /**
+     * アクティビティのスタートイベントで呼ぶ
+     */
+    public void onStop()
+    {
+        if (MyData.DEBUG) Log.i(TAG, "onStop");
+        _LocationManager.removeUpdates(this);
+    }
+
+    /**
+     * アクティビティの破棄イベントで呼ぶ
+     */
+    public void onDestroy()
+    {
+        // 重要：requestLocationUpdatesしたままアプリを終了すると挙動がおかしくなる。
+        _LocationManager.removeUpdates(this);
+        // イベントリスナーの削除
+        removeEventListener();
+    }
+
+    /**
+     * オーバーライドメソッド
+     */
+    @Override
+    public void onLocationChanged(Location location) {
+        // TODO 自動生成されたメソッド・スタブ
+        _MyLocationManagerListener.UpdatedLocation(location);
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+        // TODO 自動生成されたメソッド・スタブ
+        
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+        // TODO 自動生成されたメソッド・スタブ
+        
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+        // TODO 自動生成されたメソッド・スタブ
+        
+    }
+}

@@ -1,0 +1,197 @@
+package ok.ks.tempura;
+
+import android.app.Activity;
+import android.content.Context;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Build;
+import android.os.StrictMode;
+import android.util.Log;
+
+public class MySensorManager implements SensorEventListener, org.openintents.sensorsimulator.hardware.SensorEventListener{
+
+    private final static String TAG = ".::MySensorManager::.";
+    // センサーマネージャリスナー
+    private MySensorManagerListener mMySensorManagerListener = null;
+    /* センサーシミュレータ使用フラグ デバッグ時：true、本番：false */
+    private final boolean mUseSensorSimulator = false; 
+
+    // アクティビティー
+    private Activity _Activity = null;
+    
+    /* センサーマネージャ */
+    private SensorManager mSensorManager;   /* 実機用 */
+    private org.openintents.sensorsimulator.hardware.SensorManagerSimulator mSensorManager2;    // シミュレータ用
+
+//    // シミュレータ用のパーミッション
+//    static{
+//        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
+//    }
+
+    /**
+     * コンストラクタ
+     * @param act
+     */
+    public MySensorManager(Activity act)
+    {
+        _Activity = act;
+    }
+    
+    /**
+     * センサーマネージャの開始
+     */
+    public void StartSensorManager()
+    {
+        /* センサーマネージャを取得する */
+        if (mUseSensorSimulator)
+        {
+            mSensorManager2 = org.openintents.sensorsimulator.hardware.SensorManagerSimulator.getSystemService(_Activity, Context.SENSOR_SERVICE);
+            mSensorManager2.connectSimulator();
+        }
+        else
+        {
+            mSensorManager = (SensorManager) _Activity.getSystemService(Context.SENSOR_SERVICE);
+        }
+    }
+    
+    /**
+     * センサーを設定
+     */
+    public boolean SetEnableSensor()
+    {
+        // 温度センサーのリスナー登録
+        if (mUseSensorSimulator)
+        {
+            // 温度センサー
+            org.openintents.sensorsimulator.hardware.Sensor s1 =
+                    mSensorManager2.getDefaultSensor(org.openintents.sensorsimulator.hardware.Sensor.TYPE_TEMPERATURE);
+            mSensorManager2.registerListener(
+                    this,
+                    s1,
+                    org.openintents.sensorsimulator.hardware.SensorManagerSimulator.SENSOR_DELAY_UI
+            );
+        }
+        else
+        {
+            // 温度センサー
+            Sensor sensorTemp;
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD_MR1)
+            {
+                // android 2.3 以前
+                sensorTemp = mSensorManager.getDefaultSensor(Sensor.TYPE_TEMPERATURE);
+                if(sensorTemp != null)
+                {
+                    mSensorManager.registerListener(this, sensorTemp, SensorManager.SENSOR_DELAY_UI);
+                }
+            }
+            else
+            {
+                // android 3.0 以降
+                sensorTemp = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+                if(sensorTemp != null)
+                {
+                    mSensorManager.registerListener(this, sensorTemp, SensorManager.SENSOR_DELAY_UI);
+                }
+            }
+            // 温度センサーが搭載されているか？
+            if (sensorTemp == null)
+            {
+                // 搭載されていない
+//                displaySensorErrorToast();
+//                _Activity.finish();
+                return false;
+            }
+            else
+            {
+                // 湿度センサー
+                Sensor sendorHumid = mSensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+                if(sendorHumid != null)
+                {
+                    mSensorManager.registerListener(this, sendorHumid, SensorManager.SENSOR_DELAY_UI);
+                }
+            }
+        }
+        Log.i(TAG, "MySensorManager --- OK!");
+        return true;
+    }
+
+    /**
+     * リスナー解除
+     */
+    public void unregistListener()
+    {
+        // リスナー解除
+        if (mUseSensorSimulator)
+        {
+            if (mSensorManager2 != null)
+            {
+                mSensorManager2.unregisterListener(this);
+            }
+        }
+        else
+        {
+            if (mSensorManager != null)
+            {
+                mSensorManager.unregisterListener(this);
+            }
+        }
+    }
+
+    /* センサー用メソッド START ------------------------------------------------*/
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // TODO 自動生成されたメソッド・スタブ
+    }
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        try
+        {
+            // リスナーのセンサー変更イベント
+            mMySensorManagerListener.onSensorChanged(event);
+        }
+        catch (Exception ex)
+        {
+            Log.e("onSensorChanged", ex.getMessage());
+        }
+    }
+    /* センサー用メソッド END   ------------------------------------------------*/
+
+    /* シミュレータ用メソッド START ------------------------------------------------*/
+    @Override
+    public void onAccuracyChanged(
+            org.openintents.sensorsimulator.hardware.Sensor sensor, int accuracy) {
+        // TODO 自動生成されたメソッド・スタブ
+    }
+    @Override
+    public void onSensorChanged(
+            org.openintents.sensorsimulator.hardware.SensorEvent event) {
+        try
+        {
+            // リスナーのセンサー変更イベント
+            mMySensorManagerListener.onSensorChanged(event);
+        }
+        catch (Exception ex)
+        {
+            Log.e("onSensorChanged", ex.getMessage());
+        }
+    }
+    /* シミュレータ用メソッド END   ------------------------------------------------*/
+
+//    /**
+//     * センサー搭載エラー
+//     */
+//    private void displaySensorErrorToast() {
+//        Toast.makeText(_Activity, "Sensor error. Temperature sensor is not equipped.", Toast.LENGTH_LONG).show();
+//    }
+
+    /**
+     * Eventリスナーを設定
+     * 
+     * @param listener
+     */
+    public void setEventListener(MySensorManagerListener listener) {
+        this.mMySensorManagerListener = listener;
+    }
+}

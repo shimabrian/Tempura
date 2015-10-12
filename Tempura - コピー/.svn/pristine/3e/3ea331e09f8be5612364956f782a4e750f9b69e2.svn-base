@@ -1,0 +1,156 @@
+package ok.ks.tempura;
+
+import java.util.Locale;
+
+import jp.adlantis.android.AdlantisView;
+import jp.adlantis.android.utils.AdlantisUtils;
+
+import com.google.ads.Ad;
+import com.google.ads.AdListener;
+import com.google.ads.AdRequest;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+import com.google.ads.AdRequest.ErrorCode;
+
+import android.app.Activity;
+import android.hardware.SensorEventListener;
+import android.util.Log;
+import android.widget.LinearLayout;
+
+public class MyAdvertiseManager implements AdListener{
+
+    // AdMobのView
+    private AdView adMobView;
+    // アクティビティー
+    private Activity _Activity = null;
+
+    public MyAdvertiseManager(Activity act)
+    {
+        _Activity = act;
+    }
+
+    /**
+     * 広告設定
+     */
+    public void setAdvertise()
+    {
+        try
+        {
+            Locale locale = Locale.getDefault();
+            if (locale.equals(Locale.JAPAN) || locale.equals(Locale.JAPANESE))
+            {
+                // Adlantisの広告を組み込む
+                setAdlantis();
+            }
+            else
+            {
+                // AdMobを表示
+                setAdMob();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.e("setAdvertise", ex.getMessage());
+        }
+    }
+    
+    /**
+     * 破棄処理
+     */
+    public void destroy()
+    {
+        // AdMobの破棄
+        if (adMobView != null) adMobView.destroy();
+    }
+    /* AdMob START ---------------------------------------------------------------------------------------------------------*/
+    /**
+     * AdMobの広告を組み込む
+     */
+    private void setAdMob()
+    {
+        try
+        {
+            // AdMobを表示
+            // adView を作成する
+            adMobView = new AdView(_Activity, AdSize.BANNER, _Activity.getString(R.string.AdMob_Publisher_ID));
+            
+            // リスナー登録
+            adMobView.setAdListener(this);
+
+            // 属性 android:id="@+id/mainLayout" が与えられているものとして
+            // LinearLayout をルックアップする
+            LinearLayout layout = (LinearLayout)_Activity.findViewById(R.id.gad);
+
+            // adView を追加
+            layout.addView(adMobView);
+
+            // 一般的なリクエストを行って広告を読み込む
+            AdRequest _AdRequest = new AdRequest();
+            adMobView.loadAd(_AdRequest);
+        }
+        catch (Exception ex)
+        {
+            Log.e("setAdMob", ex.getMessage());
+        }
+    }
+    @Override
+    public void onDismissScreen(Ad arg0) {
+        // TODO 自動生成されたメソッド・スタブ
+    }
+    /**
+     * AdMob読み込みエラーイベント
+     * @see com.google.ads.AdListener#onFailedToReceiveAd(com.google.ads.Ad, com.google.ads.AdRequest.ErrorCode)
+     */
+    @Override
+    public void onFailedToReceiveAd(Ad arg0, ErrorCode arg1) {
+        Log.i("onFailedToReceiveAd", "failed to receive ad (" + arg1 + ")");
+        try
+        {
+            // Adlantisの広告を組み込む
+            setAdlantis();
+        }
+        catch (Exception ex)
+        {
+            Log.e("onFailedToReceiveAd", ex.getMessage());
+        }
+    }
+    @Override
+    public void onLeaveApplication(Ad arg0) {
+        // TODO 自動生成されたメソッド・スタブ
+    }
+    @Override
+    public void onPresentScreen(Ad arg0) {
+        // TODO 自動生成されたメソッド・スタブ
+    }
+    @Override
+    public void onReceiveAd(Ad arg0) {
+        Log.i("onReceiveAd", "Success to receive ad (" + arg0.toString() + ")");
+    }
+    /* AdMob END ---------------------------------------------------------------------------------------------------------*/
+
+    /* Adlantis START ---------------------------------------------------------------------------------------------------------*/
+    /**
+     * Adlantisの広告を組み込む
+     */
+    private void setAdlantis()
+    {
+        try
+        {
+            // Adlantisを読み込む
+            AdlantisView adView = new AdlantisView(_Activity);
+            /*
+            * 以下の xxx の部分には、管理画面より取得したPublisherIDを入れ替えてください。
+            * (ApplicationManifest.xmlで事前に定義した場合は不要です)
+            */
+            adView.setPublisherID(_Activity.getString(R.string.Adlantis_Publisher_ID));
+            _Activity.addContentView(adView, new LinearLayout.LayoutParams(
+                                                        LinearLayout.LayoutParams.FILL_PARENT,
+                                                        AdlantisUtils.adHeightPixels(_Activity)));
+        }
+        catch (Exception ex)
+        {
+            Log.e("setAdlantis", ex.getMessage());
+        }
+    }
+    /* Adlantis END ---------------------------------------------------------------------------------------------------------*/
+}

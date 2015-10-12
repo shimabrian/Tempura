@@ -1,0 +1,710 @@
+package ok.ks.tempura;
+
+import java.util.Calendar;
+import java.util.Locale;
+
+import jp.adlantis.android.AdlantisView;
+import jp.adlantis.android.utils.AdlantisUtils;
+import android.app.Activity;
+import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.StrictMode;
+import android.text.format.DateFormat;
+import android.util.Log;
+import android.util.TypedValue;
+import android.view.Menu;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.ads.Ad;
+import com.google.ads.AdListener;
+import com.google.ads.AdRequest;
+import com.google.ads.AdRequest.ErrorCode;
+import com.google.ads.AdSize;
+import com.google.ads.AdView;
+
+public class MainActivity extends Activity implements AdListener, SensorEventListener, org.openintents.sensorsimulator.hardware.SensorEventListener {
+
+	/* センサーマネージャ */
+	private SensorManager mSensorManager;	/* 実機用 */
+	private org.openintents.sensorsimulator.hardware.SensorManagerSimulator mSensorManager2;	// シミュレータ用
+	/* 摂氏華氏表示フラグ */
+	private boolean tempratureCelsius = true;
+	/* センサーシミュレータ使用フラグ デバッグ時：true、本番：false */
+	private boolean mUseSensorSimulator = true; 
+
+	/* 背景色 */
+	private int backgroundColor = 0;
+	private int backgroundColor1 = Color.rgb(123, 140, 90);	// グレー
+	private int backgroundColor2 = Color.rgb(207, 132, 2);		// オレンジ
+	
+	// AdMobのView
+	private AdView adMobView;
+
+	static{
+		StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
+	}
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+
+		// 広告の設定
+		setAdvertise();
+		
+		// 画面の向きを縦固定する
+		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+		// 気温のタップイベントリスナー登録
+		TextView _TextView1 = (TextView)findViewById(R.id.textView1);
+		_TextView1.setOnClickListener(new ClickListner());
+		
+		ImageView _ImageView = (ImageView)findViewById(R.id.imageView1);
+		_ImageView.setOnClickListener(new ClickListner());
+		
+		// 背景色を決める
+		backgroundColor = backgroundColor1;
+		
+		/* センサーマネージャを取得する */
+		if (mUseSensorSimulator)
+		{
+	        mSensorManager2 = org.openintents.sensorsimulator.hardware.SensorManagerSimulator.getSystemService(this, Context.SENSOR_SERVICE);
+	        mSensorManager2.connectSimulator();
+		}
+		else
+		{
+	        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+		}
+    }
+
+	@Override
+	protected void onDestroy() {
+		// AdMobの破棄
+		if (adMobView != null) adMobView.destroy();
+		super.onDestroy();
+	}
+
+	/*
+	 * 広告設定
+	 */
+	private void setAdvertise()
+	{
+		try
+		{
+			Locale locale = Locale.getDefault();
+			if (locale.equals(Locale.JAPAN) || locale.equals(Locale.JAPANESE))
+			{
+				// Adlantisの広告を組み込む
+				setAdlantis();
+			}
+			else
+			{
+				// AdMobを表示
+				setAdMob();
+			}
+		}
+		catch (Exception ex)
+		{
+			Log.e("setAdvertise", ex.getMessage());
+		}
+	}
+
+	/*
+	 * Adlantisの広告を組み込む
+	 */
+	private void setAdlantis()
+	{
+		try
+		{
+			// Adlantisを読み込む
+			AdlantisView adView = new AdlantisView(this);
+			/*
+			* 以下の xxx の部分には、管理画面より取得したPublisherIDを入れ替えてください。
+			* (ApplicationManifest.xmlで事前に定義した場合は不要です)
+			*/
+			adView.setPublisherID(getString(R.string.Adlantis_Publisher_ID));
+			addContentView(adView, new LinearLayout.LayoutParams(
+														LinearLayout.LayoutParams.FILL_PARENT,
+														AdlantisUtils.adHeightPixels(this)));
+		}
+		catch (Exception ex)
+		{
+			Log.e("setAdlantis", ex.getMessage());
+		}
+	}
+	
+	/*
+	 * AdMobの広告を組み込む
+	 */
+	private void setAdMob()
+	{
+		try
+		{
+			// AdMobを表示
+			// adView を作成する
+			adMobView = new AdView(this, AdSize.BANNER, getString(R.string.AdMob_Publisher_ID));
+			
+			// リスナー登録
+			adMobView.setAdListener(this);
+
+		    // 属性 android:id="@+id/mainLayout" が与えられているものとして
+		    // LinearLayout をルックアップする
+		    LinearLayout layout = (LinearLayout)findViewById(R.id.gad);
+
+		    // adView を追加
+		    layout.addView(adMobView);
+
+		    // 一般的なリクエストを行って広告を読み込む
+		    AdRequest _AdRequest = new AdRequest();
+		    adMobView.loadAd(_AdRequest);
+		}
+		catch (Exception ex)
+		{
+			Log.e("setAdMob", ex.getMessage());
+		}
+	}
+	
+	/* AdMobメソッド START */
+	@Override
+	public void onDismissScreen(Ad arg0) {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+
+	/*
+	 * AdMob読み込みエラーイベント
+	 * @see com.google.ads.AdListener#onFailedToReceiveAd(com.google.ads.Ad, com.google.ads.AdRequest.ErrorCode)
+	 */
+	@Override
+	public void onFailedToReceiveAd(Ad arg0, ErrorCode arg1) {
+		Log.i("onFailedToReceiveAd", "failed to receive ad (" + arg1 + ")");
+		try
+		{
+			// Adlantisの広告を組み込む
+			setAdlantis();
+		}
+		catch (Exception ex)
+		{
+			Log.e("onFailedToReceiveAd", ex.getMessage());
+		}
+	}
+
+	@Override
+	public void onLeaveApplication(Ad arg0) {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+
+	@Override
+	public void onPresentScreen(Ad arg0) {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+
+	@Override
+	public void onReceiveAd(Ad arg0) {
+		Log.i("onReceiveAd", "Success to receive ad (" + arg0.toString() + ")");
+		
+	}
+	/* AdMobメソッド END */
+
+	/*
+	 * テキストビューのリサイズ
+	 */
+	private void resizeTextView(int id, String text)
+	{
+		try
+		{
+			// テキストビューの取得
+			TextView _TextView = (TextView)findViewById(id);
+			
+			// テキストの幅
+			int viewWidth = _TextView.getWidth();//0
+			// テキストサイズ
+			float viewTextSize = _TextView.getTextSize();
+			
+			// テキストの情報取得
+			Paint p = new Paint();
+			p.setTextSize(viewTextSize);
+			// 表示しようとするテキストの幅
+			float textWidth = p.measureText(text);//264
+			
+			// 表示しようとするテキストの幅 < テキストの幅
+			while (textWidth < viewWidth) {
+				// テキストサイズを加算
+				viewTextSize++;
+				
+				// 再度テキストの幅を取得
+				p.setTextSize(viewTextSize);
+				textWidth = p.measureText(text);
+			}
+			
+			// テキストサイズを設定
+			_TextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, viewTextSize);
+//			_TextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, 105f);	// 画面幅に対して最大サイズを取得したいが、上手くいかないので固定しておく
+		}
+		catch (Exception ex)
+		{
+			Log.e("resizeTextView", ex.getMessage());
+		}
+	}
+
+	
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		// TODO 自動生成されたメソッド・スタブ
+		super.onWindowFocusChanged(hasFocus);
+		
+		// サイズを設定
+		resizeTextView(R.id.textView1, "123.4");
+		resizeTextView(R.id.textView2, "123.4");
+	}
+
+	/*
+	 * テキストのスタイルを設定
+	 */
+	private void setTextStyle()
+	{
+		try
+		{
+			TextView _TextView1 = (TextView)findViewById(R.id.textView1);
+			TextView _TextView2 = (TextView)findViewById(R.id.textView2);
+			TextView _TextView3 = (TextView)findViewById(R.id.textView3);
+
+			// フォントを作成
+			Typeface typeface = Typeface.createFromAsset(getAssets(), "fonts/f_7barspbd.ttf");
+			// フォントをセット
+			if (typeface != null)
+			{
+				_TextView1.setTypeface(typeface);
+				_TextView2.setTypeface(typeface);
+				_TextView3.setTypeface(typeface);
+			}
+			
+			// フォントカラーを設定
+			_TextView1.setTextColor(Color.BLACK);
+			_TextView2.setTextColor(Color.BLACK);
+			_TextView3.setTextColor(Color.BLACK);
+
+		}
+		catch (Exception ex)
+		{
+			Log.e("setFont", ex.getMessage());
+		}
+	}
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.activity_main, menu);
+		return true;
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		try
+		{
+			// テキストスタイルを設定
+			setTextStyle();
+
+			// 温度センサーのリスナー登録
+			if (mUseSensorSimulator)
+			{
+				// 温度センサー
+				org.openintents.sensorsimulator.hardware.Sensor s1 =
+						mSensorManager2.getDefaultSensor(org.openintents.sensorsimulator.hardware.Sensor.TYPE_TEMPERATURE);
+				mSensorManager2.registerListener(
+						this,
+						s1,
+						org.openintents.sensorsimulator.hardware.SensorManagerSimulator.SENSOR_DELAY_UI
+				);
+			}
+			else
+			{
+				// 温度センサー
+				Sensor s1;
+				if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.GINGERBREAD_MR1)
+				{
+					// android 2.3 以前
+					s1 = mSensorManager.getDefaultSensor(Sensor.TYPE_TEMPERATURE);
+			    	if(s1 != null)
+			    	{
+						mSensorManager.registerListener(this, s1, SensorManager.SENSOR_DELAY_UI);
+			    	}
+				}
+				else
+				{
+					// android 3.0 以降
+					s1 = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
+			    	if(s1 != null)
+			    	{
+						mSensorManager.registerListener(this, s1, SensorManager.SENSOR_DELAY_UI);
+			    	}
+				}
+				if (s1 == null)
+				{
+					// センサーエラー
+                    displaySensorErrorToast();
+			        this.finish();
+				}
+				// 湿度センサー
+		    	Sensor s2 = mSensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+		    	if(s2 != null)
+		    	{
+		    		mSensorManager.registerListener(this, s2, SensorManager.SENSOR_DELAY_UI);
+		    	}
+			}
+		}
+		catch (Exception ex)
+		{
+			Log.e("onResume", ex.getMessage());
+		}
+	}
+
+	/*
+	 * センサー搭載エラー
+	 */
+	private void displaySensorErrorToast() {
+		Toast.makeText(this, "Sensor error. Temperature sensor is not equipped.", Toast.LENGTH_LONG).show();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		try
+		{
+			// リスナー解除
+			if (mUseSensorSimulator)
+			{
+				if (mSensorManager2 != null)
+				{
+					mSensorManager2.unregisterListener(this);
+				}
+			}
+			else
+			{
+				if (mSensorManager != null)
+				{
+					mSensorManager.unregisterListener(this);
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			Log.e("onPause", ex.getMessage());
+		}
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		try
+		{
+			// センサータイプを判別
+			int sensor = event.sensor.getType();
+			ImageView image = (ImageView)findViewById(R.id.imageView3);
+			image.setBackgroundColor(backgroundColor);
+			switch (sensor)
+			{
+				case Sensor.TYPE_TEMPERATURE:
+				case Sensor.TYPE_AMBIENT_TEMPERATURE:
+					viewTemplature(event.values);
+					break;
+				case Sensor.TYPE_RELATIVE_HUMIDITY:
+					viewHumidity(event.values);
+					break;
+				default:
+					break;
+			}
+			// 時間の表示
+			viewTime();
+		}
+		catch (Exception ex)
+		{
+			Log.e("onSensorChanged", ex.getMessage());
+		}
+	}
+
+	/*
+	 * 温度表示
+	 */
+	private void viewTemplature(float[] values)
+	{
+		try
+		{
+			/*
+			 * 気温
+			 */
+			// 温度の場合は0番目に値が入っている（摂氏）
+			float temp = values[0];
+			if (!tempratureCelsius)
+			{
+				// 摂氏→華氏へ変換
+				temp = convTemperatureByMode(temp, false);
+			}
+			TextView _TextView1 = (TextView)findViewById(R.id.textView1);
+			_TextView1.setText(String.valueOf(temp));
+
+			// 単位
+			Bitmap image;
+			ImageView img;
+			if (!tempratureCelsius)
+			{
+				image = BitmapFactory.decodeResource(
+											this.getBaseContext().getResources(),
+											R.drawable.fahrenheit);
+			}
+			else
+			{
+				image = BitmapFactory.decodeResource(
+											this.getBaseContext().getResources(),
+											R.drawable.celsius);
+			}
+			img = (ImageView)findViewById(R.id.imageView1);
+			img.setImageBitmap(image);
+
+//			TextView _TextView4 = (TextView)findViewById(R.id.textView4);
+//			
+//			// 気温の調整
+//			float wbgt = temp - 3f;
+//			if (wbgt <= convTemperatureByMode(24f, tempratureCelsius))
+//			{
+//				_TextView4.setText(R.string.temp_0_to_24);
+//			}
+//			else if (convTemperatureByMode(25f, tempratureCelsius) <= wbgt
+//						&& wbgt <= convTemperatureByMode(27f, tempratureCelsius))
+//			{
+//				_TextView4.setText(R.string.temp_25_to_27);
+//			}
+//			else if (convTemperatureByMode(28f, tempratureCelsius) <= wbgt
+//						&& wbgt <= convTemperatureByMode(30f, tempratureCelsius))
+//			{
+//				_TextView4.setText(R.string.temp_28_to_30);
+//			}
+//			else if (convTemperatureByMode(31f, tempratureCelsius) <= wbgt
+//						&& wbgt <= convTemperatureByMode(40f, tempratureCelsius))
+//			{
+//				_TextView4.setText(R.string.temp_31_to_40);
+//			}
+//			else if (convTemperatureByMode(41f, tempratureCelsius) <= wbgt)
+//			{
+//				StringBuilder sb = new StringBuilder();
+//				for (int i = 0; i <= wbgt - convTemperatureByMode(41f, tempratureCelsius); i++)
+//				{
+//					sb.append("あかん");
+//				}
+//				_TextView4.setText(sb.toString());
+//			}
+//			else
+//			{
+//				_TextView4.setText("???");
+//			}
+		}
+		catch (Exception ex)
+		{
+			Log.e("viewTemplature", ex.getMessage());
+		}
+	}
+	
+	/*
+	 * 湿度表示
+	 */
+	private void viewHumidity(float[] values)
+	{
+		try
+		{
+			/*
+			 * 湿度
+			 */
+			// 0番目に値が入っている
+			float humid = values[0];
+			String txt = String.valueOf(humid);
+			TextView _TextView2 = (TextView)findViewById(R.id.textView2);
+			_TextView2.setText(txt);
+
+			Bitmap image;
+			ImageView img;
+			image = BitmapFactory.decodeResource(
+										this.getBaseContext().getResources(),
+										R.drawable.percentage);
+			img = (ImageView)findViewById(R.id.imageView2);
+			img.setImageBitmap(image);
+		}
+		catch (Exception ex)
+		{
+			Log.e("viewHumidity", ex.getMessage());
+		}
+	}
+	
+	/*
+	 * 時間表示
+	 */
+	private void viewTime()
+	{
+		try
+		{
+			/*
+			 * 時間
+			 */
+			String time = DateFormat.format("yyyy-MM-dd kk:mm:ss", Calendar.getInstance()).toString();
+			TextView _TextView3 = (TextView)findViewById(R.id.textView3);
+			_TextView3.setText(time + " ");
+		}
+		catch (Exception ex)
+		{
+			Log.e("viewTime", ex.getMessage());
+		}
+	}
+	/*
+	 * 摂氏華氏変換
+	 */
+	private float convTemperatureByMode(float temp, boolean to_celsius)
+	{
+		if (to_celsius)
+		{
+//			// 華氏→摂氏
+//			temp = (5 / 9) * (temp - 32);
+		}
+		else
+		{
+			// 摂氏→華氏
+			temp = ((9 / 5) * temp) + 32;
+		}
+		return temp;
+	}
+	/* シミュレータ用メソッド START ------------------------------------------------*/
+	@Override
+	public void onAccuracyChanged(
+			org.openintents.sensorsimulator.hardware.Sensor sensor, int accuracy) {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+	@Override
+	public void onSensorChanged(
+			org.openintents.sensorsimulator.hardware.SensorEvent event) {
+		try
+		{
+			// センサータイプを判別
+			int sensor = event.type;
+			ImageView image = (ImageView)findViewById(R.id.imageView3);
+			image.setBackgroundColor(backgroundColor);
+			switch (sensor)
+			{
+				case org.openintents.sensorsimulator.hardware.Sensor.TYPE_TEMPERATURE:
+					viewTemplature(event.values);
+					viewHumidity(new float[]{(float)(event.values[0] * 0.7)});
+					break;
+//				case org.openintents.sensorsimulator.hardware.Sensor.TYPE_RELATIVE_HUMIDITY:
+//					viewHumidity(event.values);
+//					break;
+				default:
+					break;
+			}
+			// 時間の表示
+			viewTime();
+		}
+		catch (Exception ex)
+		{
+			Log.e("onSensorChanged", ex.getMessage());
+		}
+	}
+	/* シミュレータ用メソッド END   ------------------------------------------------*/
+
+	/*
+	 * クリックリスナー
+	 */
+	class ClickListner implements View.OnClickListener
+	{
+
+		@Override
+		public void onClick(View v) {
+			int id = v.getId();
+			switch (id)
+			{
+				case R.id.textView1:
+				case R.id.imageView1:
+					// 摂氏華氏表示を逆転させる
+					tempratureCelsius = !tempratureCelsius;
+					break;
+				default:
+					break;
+			}
+		}
+		
+	}
+	
+	// タッチダウン
+	private boolean istouched = false;
+	// 最後のタッチX座標
+	private float lastTouchX;
+	// 現在のタッチX座標
+	private float currentTouchX;
+	// フリックだと判断する最低のX座標移動値
+	private float flickRange = 50;
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+	    switch (event.getAction()) {
+	    case MotionEvent.ACTION_DOWN:
+	        Log.d("TouchEvent", "getAction()" + "ACTION_DOWN");
+	        istouched = true;
+	        lastTouchX = event.getX();
+	        break;
+	    case MotionEvent.ACTION_UP:
+	        Log.d("TouchEvent", "getAction()" + "ACTION_UP");
+	        currentTouchX = event.getX();
+	        if (currentTouchX + flickRange < lastTouchX)
+	        {
+	        	// 右から左へ
+	        }
+	        else if (lastTouchX + flickRange < currentTouchX)
+	        {
+	        	// 左から右へ
+	        }
+	        else
+	        {
+		        if (istouched)
+		        {
+		        	// タッチ
+		        	if (backgroundColor == backgroundColor1)
+		        	{
+		        		backgroundColor = backgroundColor2;
+		        	}
+		        	else
+		        	{
+		        		backgroundColor = backgroundColor1;
+		        	}
+		        }
+	        }
+	        istouched = false;
+	        break;
+	    case MotionEvent.ACTION_MOVE:
+	        Log.d("TouchEvent", "getAction()" + "ACTION_MOVE");
+	        break;
+	    case MotionEvent.ACTION_CANCEL:
+	        Log.d("TouchEvent", "getAction()" + "ACTION_CANCEL");
+	        break;
+	    }
+		return true;
+	}
+}

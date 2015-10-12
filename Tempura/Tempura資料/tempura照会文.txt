@@ -1,0 +1,81 @@
+k-shima@g-rip.biz
+
+Androidアプリ[デジタル温度計]のレビューのお願い
+
+こんにちは。
+
+私は日本のAndroidアプリ開発者です。
+
+サイトにレビュー記事を載せて頂きたく連絡しました。
+
+レビュー記事に取り上げていただきたいアプリは以下です。
+
+申請者：
+[shima's kitchen]
+
+カテゴリ：
+[ツール]
+
+アプリ名:
+[デジタル温度計]
+
+アプリURL:
+[https://play.google.com/store/apps/details?id=ok.ks.tempura]
+
+アプリ概要:
+[シンプルで使いやすいデジタル温度計アプリ
+
+温度表示も摂氏（℃）、華氏（°F）の切り替えもタップで簡単に切り替えられます。
+
+湿度表示もついているので、音響スタジオや高価な一眼レフカメラの管理場所などを測定するのに向いてます。
+
+背景色もデジタル数値が見やすいような２種類準備しました。
+背景色の切り替えはタップで切り替えられます。
+
+※温度センサー搭載の端末でのみ動作します。
+
+※温度センサーが搭載されていない端末でインストールすると以下のメッセージが表示され、アプリは起動しません。
+　「Sensor error. Temperature sensor is not equipped.」
+　"センサーエラーです。温度センサーが搭載されていません。"]
+
+ユーザの使いやすさを第一に考えて作ったアプリです。
+
+よろしくお願いします。
+
+A request for a review of the android application [Digital Thermometer]
+
+Hello.
+
+I am a Japanese android application developer who lives in Okinawa.
+
+I have contacted you to ask if our site could publish a review article.
+
+The application I would like you to review is listed below.
+
+Developer name:
+	shima's kitchen
+
+Category:
+	Tools
+
+Application name:
+	Digital Thermometer
+
+Application URL:
+	https://play.google.com/store/apps/details?id=ok.ks.tempura
+
+Application outline:
+	This is very simple and easy to use digital thermometer.
+
+	A temperature indication is also changed simply [ the change of Centigrade (℃) and Fahrenheit (degree F) ] by tap. 
+
+	Since the humidity display is also attached, it is fit for measuring a sound studio, the management place of an expensive single-lens reflex camera, etc. 
+
+	Two kinds of background colors that a digital numerical value was legible were prepared. 
+
+	The change of a background color is changed by screen tap.
+
+
+This is an application designed with ease of use in mind.
+
+Thank you for your consideration.

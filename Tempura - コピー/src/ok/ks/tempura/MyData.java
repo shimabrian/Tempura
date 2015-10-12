@@ -1,0 +1,165 @@
+package ok.ks.tempura;
+
+public class MyData {
+
+    /**
+     * デバッグ
+     */
+    public final static boolean DEBUG = false;
+    
+    /**
+     * 気温
+     */
+    private float temperature = 0.0f;
+    
+    /**
+     * 湿度
+     */
+    private float humidity = 0.0f;
+    
+    /**
+     * 気圧
+     */
+    private float pressure = 0.0f;
+    
+    /**
+     * センサーの有無
+     */
+    private boolean isEnableSensor = false;
+    
+    /**
+     * ケルビンの有効フラグ
+     */
+    private boolean isKelvin = false;
+    
+    /**
+     * ケルビンを変換する基準値
+     * ケルビン⇒摂氏：280K - 273.15 = 6.85℃
+     */
+    private float kelvinConvertVal = 273.15f;
+    
+    /**
+     * 摂氏
+     */
+    private boolean isViewCelsius = false;
+    
+    /**
+     * @return pressure
+     */
+    public float getPressure() {
+        return pressure;
+    }
+
+    /**
+     * @param pressure セットする pressure
+     */
+    public void setPressure(float pressure) {
+        this.pressure = pressure;
+    }
+
+    /**
+     * @return isViewCelsius
+     */
+    public boolean isViewCelsius() {
+        return isViewCelsius;
+    }
+
+    /**
+     * @param isViewCelsius セットする isViewCelsius
+     */
+    public void setViewCelsius(boolean isViewCelsius) {
+        this.isViewCelsius = isViewCelsius;
+    }
+
+    /**
+     * @return temperature
+     */
+    public float getTemperature() {
+        float temp = temperature;
+        if (isKelvin)
+        {
+            // ケルビンなら摂氏へ変換
+            temp = temperature - kelvinConvertVal;
+        }
+        // 摂氏表示か？
+        if (isViewCelsius)
+        {
+            double d = temp;
+            temp = (float)round(d, 1);
+            return temp;
+        }
+        else
+        {
+            // 摂氏→華氏
+            double d = ((9 / 5) * temp) + 32;
+            temp = (float)round(d, 1);
+            return temp;
+        }
+    }
+
+    /**
+     * @param temperature セットする temperature
+     */
+    public void setTemperature(float temperature) {
+        this.temperature = temperature;
+    }
+
+    /**
+     * @return humidity
+     */
+    public float getHumidity() {
+        float humid = humidity;
+        if (isKelvin)
+        {
+            // ケルビンなら摂氏へ変換
+            //humid = 0.0f;
+        }
+        // 切り捨て
+        double d = round((double)humid, 1);
+        humid = (float)d;
+        return humid;
+    }
+
+    public static double round(double valueToRound, int numberOfDecimalPlaces)
+    {
+        double multipicationFactor = Math.pow(10, numberOfDecimalPlaces);
+        double interestedInZeroDPs = valueToRound * multipicationFactor;
+        return Math.round(interestedInZeroDPs) / multipicationFactor;
+    }
+    
+    /**
+     * @param humidity セットする humidity
+     */
+    public void setHumidity(float humidity) {
+        this.humidity = humidity;
+    }
+
+    /**
+     * @return isEnableSensor
+     */
+    public boolean isEnableSensor() {
+        return isEnableSensor;
+    }
+
+    /**
+     * @param isEnableSensor セットする isEnableSensor
+     */
+    public void setEnableSensor(boolean isEnableSensor) {
+        this.isEnableSensor = isEnableSensor;
+    }
+
+    /**
+     * @return isKelvin
+     */
+    public boolean isKelvin() {
+        return isKelvin;
+    }
+
+    /**
+     * @param isKelvin セットする isKelvin
+     */
+    public void setKelvin(boolean isKelvin) {
+        this.isKelvin = isKelvin;
+    }
+    
+}
